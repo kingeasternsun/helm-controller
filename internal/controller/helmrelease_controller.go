@@ -45,7 +45,6 @@ import (
 	aclv1 "github.com/fluxcd/pkg/apis/acl"
 	"github.com/fluxcd/pkg/apis/meta"
 	"github.com/fluxcd/pkg/auth"
-	authutils "github.com/fluxcd/pkg/auth/utils"
 	"github.com/fluxcd/pkg/cache"
 	"github.com/fluxcd/pkg/runtime/acl"
 	runtimeClient "github.com/fluxcd/pkg/runtime/client"
@@ -750,7 +749,7 @@ func (r *HelmReleaseReconciler) buildRESTClientGetter(ctx context.Context, obj *
 			}
 			opts = append(opts, auth.WithCache(*r.TokenCache, involvedObject))
 		}
-		restConfig, err = authutils.GetRESTConfig(ctx, *kc, obj.GetNamespace(), r.Client, opts...)
+		restConfig, err = GetRESTConfig(ctx, *kc, obj.GetNamespace(), r.Client, opts...)
 	case kc.SecretRef != nil && kc.ConfigMapRef == nil:
 		secretName := types.NamespacedName{
 			Namespace: obj.GetNamespace(),
