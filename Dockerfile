@@ -1,10 +1,10 @@
 ARG GO_VERSION=1.25
 ARG XX_VERSION=1.6.1
 
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
+FROM --platform=$BUILDPLATFORM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/tonistiigi/xx:1.4.0 AS xx
 
 # Docker buildkit multi-arch build requires golang alpine
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder
+FROM --platform=$BUILDPLATFORM wr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/golang:1.25.7-alpine AS builder
 
 # Copy the build utilities.
 COPY --from=xx / /
@@ -31,7 +31,7 @@ COPY internal/ internal/
 ENV CGO_ENABLED=0
 RUN xx-go build -trimpath -a -o helm-controller main.go
 
-FROM alpine:3.22
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/alpine:3.22.2
 
 RUN apk add --no-cache ca-certificates \
     && update-ca-certificates
