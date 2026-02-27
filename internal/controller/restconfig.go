@@ -12,9 +12,9 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	intkarmada "github.com/fluxcd/helm-controller/internal/controller/karmada"
 	"github.com/fluxcd/pkg/apis/meta"
 	"github.com/fluxcd/pkg/auth"
-	"github.com/fluxcd/pkg/auth/generic"
 )
 
 func GetRESTConfig(ctx context.Context,
@@ -32,8 +32,7 @@ func GetRESTConfig(ctx context.Context,
 		return nil, fmt.Errorf("failed to get configmap %s: %w", cmKey.String(), err)
 	}
 
-	// TODO: Repace this with karmada provider
-	provider := generic.Provider{}
+	provider := intkarmada.Provider{}
 
 	// Configure options.
 	if c, ok := cm.Data[meta.KubeConfigKeyCluster]; ok {
@@ -73,6 +72,9 @@ func GetRESTConfig(ctx context.Context,
 		Host:            conf.Host,
 		TLSClientConfig: rest.TLSClientConfig{CAData: conf.CAData},
 	}
+	// if len(conf.CAData) == 0 {
+	// 	restConfig.TLSClientConfig.Insecure = true
+	// }
 	restConfig.Wrap(func(base http.RoundTripper) http.RoundTripper {
 		return &restConfigRoundTripper{
 			base:     base,

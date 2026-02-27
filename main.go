@@ -78,7 +78,7 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-func main() {
+func main2() {
 	const (
 		tokenCacheDefaultMaxSize = 100
 	)
