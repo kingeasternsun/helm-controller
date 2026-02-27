@@ -94,11 +94,33 @@ type restConfigRoundTripper struct {
 }
 
 // RoundTrip implements http.RoundTripper.
+// RoundTrip implements http.RoundTripper.
 func (r *restConfigRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// 调用上面定义的 NewRESTConfig (通过 auth.GetRESTConfig 间接调用)
 	details, err := auth.GetRESTConfig(req.Context(), r.provider, r.opts...)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+details.BearerToken)
+
+	token := details.BearerToken
+
+	// ---- 解析特殊协议前缀 ----
+	if strings.HasPrefix(token, "karmada-impersonate:") {
+		realToken := strings.TrimPrefix(token, "karmada-impersonate:")
+
+		// 1. 设置认证 Token (来自 Impersonator Secret)
+		req.Header.Set("Authorization", "Bearer "+realToken)
+
+		// 2. 设置冒充 Header (Karmada 核心逻辑)
+		// 这是让 member 集群 API Server 识别调用的关键
+		req.Header.Set("Impersonate-User", "system:serviceaccount:karmada-system:karmada-controller")
+
+		// 可选：根据集群安全配置，可能还需要设置 Group
+		// req.Header.Set("Impersonate-Group", "system:serviceaccounts:karmada-system")
+	} else {
+		// ---- 普通模式：直接使用 Token ----
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
 	return r.base.RoundTrip(req)
 }

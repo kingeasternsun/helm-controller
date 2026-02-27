@@ -48,83 +48,69 @@ func (Provider) GetAccessTokenOptionsForCluster(
 
 func (Provider) NewRESTConfig(
 	ctx context.Context,
-	_ []auth.Token, // karmada provider 不使用 accessTokens
+	_ []auth.Token,
 	opts ...auth.Option,
 ) (*auth.RESTConfig, error) {
-
 	var o auth.Options
 	o.Apply(opts...)
 
-	// ---- 基础校验 ----
-	if o.ClusterResource == "" {
-		return nil, fmt.Errorf("cluster is required for karmada provider")
-	}
-	if o.Client == nil {
-		return nil, fmt.Errorf("controller-runtime client is required")
-	}
-
 	c := o.Client
-
-	// ---- 1. 查询 Karmada Cluster ----
 	cluster := &clusterv1alpha1.Cluster{}
-	if err := c.Get(ctx,
-		client.ObjectKey{Name: o.ClusterResource},
-		cluster,
-	); err != nil {
-		return nil, fmt.Errorf("failed to get karmada Cluster %q: %w",
-			o.ClusterResource, err)
+	if err := c.Get(ctx, client.ObjectKey{Name: o.ClusterResource}, cluster); err != nil {
+		return nil, err
 	}
 
-	// ---- 2. 获取 Secret（兼容 secretRef 模式）----
-	var secret *corev1.Secret
+	// ---- 优先处理 Impersonation 模式 ----
+	if cluster.Spec.ImpersonatorSecretRef != nil {
+		s := &corev1.Secret{}
+		if err := c.Get(ctx, client.ObjectKey{
+			Namespace: cluster.Spec.ImpersonatorSecretRef.Namespace,
+			Name:      cluster.Spec.ImpersonatorSecretRef.Name,
+		}, s); err != nil {
+			return nil, fmt.Errorf("failed to get impersonator secret: %w", err)
+		}
+
+		// 关键：添加前缀协议 "karmada-impersonate:"
+		// 同时兼容 Secret Data 中的 caBundle (Karmada 常用) 和 ca.crt
+		return buildKarmadaRESTConfig(cluster, s, true)
+	}
+
+	// ---- 回退到 Legacy SecretRef 模式 ----
 	if cluster.Spec.SecretRef != nil {
 		s := &corev1.Secret{}
 		if err := c.Get(ctx, client.ObjectKey{
 			Namespace: cluster.Spec.SecretRef.Namespace,
 			Name:      cluster.Spec.SecretRef.Name,
 		}, s); err != nil {
-			return nil, fmt.Errorf("failed to get cluster secret %s/%s: %w",
-				cluster.Spec.SecretRef.Namespace,
-				cluster.Spec.SecretRef.Name,
-				err)
+			return nil, fmt.Errorf("failed to get legacy cluster secret: %w", err)
 		}
-		secret = s
+		return buildKarmadaRESTConfig(cluster, s, false)
 	}
 
-	if secret == nil {
-		return nil, fmt.Errorf("cluster %s has neither ClusterCredential nor SecretRef",
-			cluster.Name)
-	}
-
-	// ---- 4. 构造 member cluster 的 RESTConfig ----
-	return buildRESTConfig(cluster, secret)
+	return nil, fmt.Errorf("cluster %s has no valid credentials", cluster.Name)
 }
 
-func buildRESTConfig(
-	cluster *clusterv1alpha1.Cluster,
-	secret *corev1.Secret,
-) (*auth.RESTConfig, error) {
-
-	server := cluster.Spec.APIEndpoint
-	if server == "" {
-		return nil, fmt.Errorf("cluster %s has empty apiEndpoint", cluster.Name)
+func buildKarmadaRESTConfig(cluster *clusterv1alpha1.Cluster, secret *corev1.Secret, isImpersonation bool) (*auth.RESTConfig, error) {
+	token := string(secret.Data["token"])
+	if token == "" {
+		return nil, fmt.Errorf("token not found in secret %s/%s", secret.Namespace, secret.Name)
 	}
 
-	token, ok := secret.Data["token"]
-	if !ok || len(token) == 0 {
-		return nil, fmt.Errorf(
-			"secret %s/%s does not contain token",
-			secret.Namespace,
-			secret.Name,
-		)
+	caData := secret.Data["ca.crt"]
+	if len(caData) == 0 {
+		caData = secret.Data["caBundle"] // 适配你 YAML 中的 caBundle 字段
 	}
 
 	conf := &auth.RESTConfig{
-		Host:        cluster.Spec.APIEndpoint,
-		BearerToken: string(token),
-		CAData:      secret.Data["ca.crt"],
-		// 不设置 ExpiresAt → Flux 会认为是 long-lived token
-		ExpiresAt: time.Now().Add(24 * time.Hour),
+		Host:      cluster.Spec.APIEndpoint,
+		CAData:    caData,
+		ExpiresAt: time.Time{},
+	}
+
+	if isImpersonation {
+		conf.BearerToken = "karmada-impersonate:" + token
+	} else {
+		conf.BearerToken = token
 	}
 
 	return conf, nil
