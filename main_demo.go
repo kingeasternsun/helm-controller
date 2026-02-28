@@ -21,7 +21,7 @@ import (
 
 // kubectl --kubeconfig ~/.karmada/karmada-apiserver.config create configmap karmada-provider-tk-dev-02 -n karmada-system --from-literal=cluster=tk-dev-02 --from-literal=provider=karmada
 // go run main_demo.go --karmada-kubeconfig ~/.karmada/karmada-apiserver.config --cluster tk-dev-02
-func main() {
+func main_demo() {
 	var kubeconfig string
 	var clusterName string
 

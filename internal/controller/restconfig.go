@@ -32,6 +32,7 @@ func GetRESTConfig(ctx context.Context,
 		return nil, fmt.Errorf("failed to get configmap %s: %w", cmKey.String(), err)
 	}
 
+	// use karmada provider
 	provider := intkarmada.Provider{}
 
 	// Configure options.
