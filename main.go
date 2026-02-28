@@ -21,6 +21,8 @@ import (
 	"os"
 	"time"
 
+	stdflag "flag"
+
 	flag "github.com/spf13/pflag"
 	"helm.sh/helm/v3/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
@@ -61,6 +63,8 @@ import (
 	"github.com/fluxcd/helm-controller/internal/features"
 	intkube "github.com/fluxcd/helm-controller/internal/kube"
 	"github.com/fluxcd/helm-controller/internal/oomwatch"
+
+	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 const controllerName = "helm-controller"
@@ -137,6 +141,11 @@ func main() {
 		"The path to the cgroup current memory usage file. Requires feature gate 'OOMWatch' to be enabled. If not set, the path will be automatically detected.")
 	flag.StringVar(&snapshotDigestAlgo, "snapshot-digest-algo", intdigest.Canonical.String(),
 		"The algorithm to use to calculate the digest of Helm release storage snapshots.")
+
+	// 1️⃣ 注册 controller-runtime 的 kubeconfig flags
+	crconfig.RegisterFlags(stdflag.CommandLine)
+	// 2️⃣ 将 stdlib flag 合并到 pflag
+	flag.CommandLine.AddGoFlagSet(stdflag.CommandLine)
 
 	clientOptions.BindFlags(flag.CommandLine)
 	logOptions.BindFlags(flag.CommandLine)
