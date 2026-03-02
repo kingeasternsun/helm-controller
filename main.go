@@ -65,6 +65,8 @@ import (
 	"github.com/fluxcd/helm-controller/internal/oomwatch"
 
 	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
+
+	clusterv1alpha1 "github.com/karmada-io/karmada/pkg/apis/cluster/v1alpha1"
 )
 
 const controllerName = "helm-controller"
@@ -79,6 +81,7 @@ func init() {
 
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
 	utilruntime.Must(v2.AddToScheme(scheme))
+	utilruntime.Must(clusterv1alpha1.Install(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
