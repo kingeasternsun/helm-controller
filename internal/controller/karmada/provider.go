@@ -7,6 +7,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/fluxcd/pkg/auth"
@@ -54,6 +55,7 @@ func (Provider) NewRESTConfig(
 ) (*auth.RESTConfig, error) {
 	var o auth.Options
 	o.Apply(opts...)
+	ctrl.LoggerFrom(ctx).Info("NewRESTConfig", "o.ClusterResource", o.ClusterResource)
 
 	c := o.Client
 	cluster := &clusterv1alpha1.Cluster{}
@@ -64,6 +66,7 @@ func (Provider) NewRESTConfig(
 	// ---- 优先处理  Legacy SecretRef 模式 ----
 	if cluster.Spec.SecretRef != nil {
 		klog.Info("SecretRef")
+		ctrl.LoggerFrom(ctx).Info("Use SecretRef to get cluster secret")
 		s := &corev1.Secret{}
 		if err := c.Get(ctx, client.ObjectKey{
 			Namespace: cluster.Spec.SecretRef.Namespace,
