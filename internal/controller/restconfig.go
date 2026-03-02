@@ -33,7 +33,7 @@ func GetRESTConfig(ctx context.Context,
 		return nil, fmt.Errorf("failed to get configmap %s: %w", cmKey.String(), err)
 	}
 
-	ctrl.LoggerFrom(ctx).Info("GetRESTConfig", "cm", cm.Data)
+	ctrl.LoggerFrom(ctx).Info("GetRESTConfig", "cm", cm.Data, "namespace", namespace, "name", kubeConfigRef.ConfigMapRef.Name)
 
 	// use karmada provider
 	provider := intkarmada.Provider{}
