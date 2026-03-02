@@ -10,6 +10,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	intkarmada "github.com/fluxcd/helm-controller/internal/controller/karmada"
@@ -31,6 +32,8 @@ func GetRESTConfig(ctx context.Context,
 	if err := ctrlClient.Get(ctx, cmKey, &cm); err != nil {
 		return nil, fmt.Errorf("failed to get configmap %s: %w", cmKey.String(), err)
 	}
+
+	ctrl.LoggerFrom(ctx).Info("GetRESTConfig", "cm", cm.Data)
 
 	// use karmada provider
 	provider := intkarmada.Provider{}
