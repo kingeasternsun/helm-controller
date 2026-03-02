@@ -4,7 +4,7 @@ ARG XX_VERSION=1.6.1
 FROM --platform=$BUILDPLATFORM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/tonistiigi/xx:1.4.0 AS xx
 
 # Docker buildkit multi-arch build requires golang alpine
-FROM --platform=$BUILDPLATFORM wr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/golang:1.25.7-alpine AS builder
+FROM --platform=$BUILDPLATFORM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/golang:1.25.7-alpine AS builder
 
 # Copy the build utilities.
 COPY --from=xx / /
