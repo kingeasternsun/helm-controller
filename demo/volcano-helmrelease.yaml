@@ -5,16 +5,20 @@ metadata:
   namespace: prod-lepton
 spec:
   interval: 10m
+  releaseName: volcano-ascend
   targetNamespace: kube-system
   storageNamespace: kube-system
   chart:
     spec:
       chart: volcano
-      version: "1.11.0"
+      version: "1.9.2"
       sourceRef:
         kind: HelmRepository
         name: volcano-oci
         namespace: prod-lepton
+  kubeConfig:
+    configMapRef:
+      name: 019cb67f-b067-78b2-a209-bcc5b8320c2c
   install:
     createNamespace: false
   upgrade:
