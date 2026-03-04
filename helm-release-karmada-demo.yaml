@@ -1,0 +1,26 @@
+
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nginx-wdy
+  namespace: prod-lepton
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: nginx
+      version: "15.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: prod-lepton
+  kubeConfig:
+    configMapRef:
+      name: 019cb67f-b067-78b2-a209-bcc5b8320c2c
+  values:
+    image:
+      registry: m.daocloud.io/docker.io
+      repository: nginx
+      tag: "1.25.3"
+      pullPolicy: IfNotPresent
+    replicaCount: 1
