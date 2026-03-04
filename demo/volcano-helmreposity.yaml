@@ -1,0 +1,9 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: volcano-oci
+  namespace: prod-lepton
+spec:
+  type: oci
+  interval: 10m
+  url: oci://registry.cn-sh-02.sensecore.dev/ccr-volcano/chart
