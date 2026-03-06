@@ -13,7 +13,7 @@ ARG TARGETPLATFORM
 
 WORKDIR /workspace
 
-# copy api submodule
+# copy api submodul
 COPY api/ api/
 
 # copy modules manifests
@@ -31,7 +31,7 @@ COPY internal/ internal/
 ENV CGO_ENABLED=0
 RUN xx-go build -trimpath -a -o helm-controller main.go
 
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/alpine:3.22.2
+FROM --platform=$TARGETPLATFORM swr.cn-south-1.myhuaweicloud.com/ascendhub/ubuntu:24.04-base 
 
 RUN apk add --no-cache ca-certificates \
     && update-ca-certificates
