@@ -23,3 +23,5 @@ spec:
     createNamespace: false
   upgrade:
     cleanupOnFail: true
+  driftDetection:
+    mode: warn
